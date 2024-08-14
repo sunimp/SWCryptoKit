@@ -1,4 +1,4 @@
-// swift-tools-version: 5.6
+// swift-tools-version: 5.10
 
 import PackageDescription
 
@@ -17,7 +17,7 @@ let package = Package(
         .package(url: "https://github.com/attaswift/BigInt.git", .upToNextMajor(from: "5.0.0")),
         .package(url: "https://github.com/horizontalsystems/HsExtensions.Swift.git", .upToNextMajor(from: "1.0.0")),
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "3.0.0"),
-        .package(url: "https://github.com/GigaBitcoin/secp256k1.swift.git", exact: .init(0, 10, 0))
+        .package(url: "https://github.com/GigaBitcoin/secp256k1.swift.git", .upToNextMajor(from: "0.17.0"))
     ],
     targets: [
         .target(
