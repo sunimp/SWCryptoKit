@@ -2,7 +2,7 @@ import Foundation
 import secp256k1
 import Crypto
 import BigInt
-import HsCryptoKitC
+import WWCryptoKitC
 
 public struct SchnorrHelper {
     static var magic: (UInt8, UInt8, UInt8, UInt8) { (218, 111, 179, 140) }

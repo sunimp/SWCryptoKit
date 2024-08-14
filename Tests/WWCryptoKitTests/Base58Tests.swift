@@ -1,6 +1,6 @@
 import XCTest
-@testable import HsCryptoKit
-import HsExtensions
+@testable import WWCryptoKit
+import WWExtensions
 
 final class Base58Tests: XCTestCase {
     private let testVectors = [
@@ -25,8 +25,8 @@ final class Base58Tests: XCTestCase {
             let hex = pair[0]
             let result = pair[1]
 
-            XCTAssertEqual(hex.hs.hexData!.hs.encodeBase58, result)
-            XCTAssertEqual(result.hs.decodeBase58.hs.hex, hex)
+            XCTAssertEqual(hex.ww.hexData!.ww.encodeBase58, result)
+            XCTAssertEqual(result.ww.decodeBase58.ww.hex, hex)
         }
     }
 

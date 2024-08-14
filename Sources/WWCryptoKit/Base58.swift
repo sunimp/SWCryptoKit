@@ -1,13 +1,13 @@
 import Foundation
-import HsExtensions
+import WWExtensions
 
-public extension HsExtension where Base == String {
+public extension WWExtension where Base == String {
     var decodeBase58: Data {
         Base58.decode(base)
     }
 }
 
-public extension HsExtension where Base == Data {
+public extension WWExtension where Base == Data {
     var encodeBase58: String {
         Base58.encode(base)
     }

@@ -1,7 +1,7 @@
 import CommonCrypto
 import Crypto
 import Foundation
-import HsExtensions
+import WWExtensions
 import secp256k1
 
 public enum Crypto {
@@ -88,7 +88,7 @@ public enum Crypto {
     }
 
     public static func publicKey(privateKey: Data, curve: DerivationCurve = .secp256k1, compressed: Bool) -> Data {
-        let privateKey = privateKey.hs.bytes
+        let privateKey = privateKey.ww.bytes
         switch curve {
         case .secp256k1:
             var pubKeyPoint = secp256k1_pubkey()

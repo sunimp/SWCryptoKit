@@ -3,41 +3,41 @@
 import PackageDescription
 
 let package = Package(
-    name: "HsCryptoKit.Swift",
+    name: "WWCryptoKit.Swift",
     platforms: [
         .macOS(.v10_15),
         .iOS(.v13),
     ],
     products: [
         .library(
-            name: "HsCryptoKit",
-            targets: ["HsCryptoKit"]),
+            name: "WWCryptoKit",
+            targets: ["WWCryptoKit"]),
     ],
     dependencies: [
         .package(url: "https://github.com/attaswift/BigInt.git", .upToNextMajor(from: "5.0.0")),
-        .package(url: "https://github.com/horizontalsystems/HsExtensions.Swift.git", .upToNextMajor(from: "1.0.0")),
+        .package(url: "https://github.com/sunimp/WWExtensions.Swift.git", .upToNextMajor(from: "1.0.7")),
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "3.0.0"),
         .package(url: "https://github.com/GigaBitcoin/secp256k1.swift.git", .upToNextMajor(from: "0.17.0"))
     ],
     targets: [
         .target(
-            name: "HsCryptoKitC",
-            path: "Sources/HsCryptoKitC"
+            name: "WWCryptoKitC",
+            path: "Sources/WWCryptoKitC"
         ),
         .target(
-            name: "HsCryptoKit",
+            name: "WWCryptoKit",
             dependencies: [
-                .target(name: "HsCryptoKitC"),
+                .target(name: "WWCryptoKitC"),
                 .product(name: "BigInt", package: "BigInt"),
-                .product(name: "HsExtensions", package: "HsExtensions.Swift"),
+                .product(name: "WWExtensions", package: "WWExtensions.Swift"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
                 .product(name: "secp256k1", package: "secp256k1.swift"),
             ],
-            path: "Sources/HsCryptoKit"
+            path: "Sources/WWCryptoKit"
         ),
         .testTarget(
-            name: "HsCryptoKitTests",
-            dependencies: ["HsCryptoKit"]),
+            name: "WWCryptoKitTests",
+            dependencies: ["WWCryptoKit"]),
     ]
 )
