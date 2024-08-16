@@ -17,7 +17,7 @@ let package = Package(
         .package(url: "https://github.com/attaswift/BigInt.git", .upToNextMajor(from: "5.0.0")),
         .package(url: "https://github.com/sunimp/WWExtensions.Swift.git", .upToNextMajor(from: "1.0.7")),
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "3.0.0"),
-        .package(url: "https://github.com/GigaBitcoin/secp256k1.swift.git", .upToNextMajor(from: "0.17.0"))
+        .package(url: "https://github.com/sunimp/secp256k1-swift.git", .upToNextMajor(from: "0.17.2"))
     ],
     targets: [
         .target(
@@ -32,7 +32,7 @@ let package = Package(
                 .product(name: "WWExtensions", package: "WWExtensions.Swift"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
-                .product(name: "secp256k1", package: "secp256k1.swift"),
+                .product(name: "secp256k1", package: "secp256k1-swift"),
             ],
             path: "Sources/WWCryptoKit"
         ),
