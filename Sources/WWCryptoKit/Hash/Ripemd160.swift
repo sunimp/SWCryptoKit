@@ -1,10 +1,10 @@
 //
 //  RIPEMD160.swift
-//  WalletKit
+//  WWCryptoKit
 //
-//  Created by yuzushioh on 2018/02/04.
-//  Copyright © 2018 yuzushioh. All rights reserved.
+//  Created by Sun on 2024/8/21.
 //
+
 import Foundation
 
 struct RIPEMD160 {

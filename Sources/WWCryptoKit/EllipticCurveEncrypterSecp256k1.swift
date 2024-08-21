@@ -1,4 +1,12 @@
+//
+//  EllipticCurveEncrypterSecp256k1.swift
+//  WWCryptoKit
+//
+//  Created by Sun on 2024/8/21.
+//
+
 import Foundation
+
 import secp256k1
 
 /// Convenience class over libsecp256k1 methods

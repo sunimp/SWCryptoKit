@@ -1,19 +1,30 @@
+//
+//  Base58.swift
+//  WWCryptoKit
+//
+//  Created by Sun on 2024/8/21.
+//
+
 import Foundation
+
 import WWExtensions
 
-public extension WWExtension where Base == String {
-    var decodeBase58: Data {
+extension WWExtension where Base == String {
+    
+    public var decodeBase58: Data {
         Base58.decode(base)
     }
 }
 
-public extension WWExtension where Base == Data {
-    var encodeBase58: String {
+extension WWExtension where Base == Data {
+    
+    public var encodeBase58: String {
         Base58.encode(base)
     }
 }
 
 public struct Base58 {
+    
     static let baseAlphabets = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     static var zeroAlphabet: Character = "1"
     static var base: Int = 58
@@ -21,6 +32,7 @@ public struct Base58 {
     static func sizeFromByte(size: Int) -> Int {
         size * 138 / 100 + 1
     }
+    
     static func sizeFromBase(size: Int) -> Int {
         size * 733 / 1000 + 1
     }

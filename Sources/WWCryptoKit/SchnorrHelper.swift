@@ -1,10 +1,19 @@
+//
+//  SchnorrHelper.swift
+//  WWCryptoKit
+//
+//  Created by Sun on 2024/8/21.
+//
+
 import Foundation
+
 import secp256k1
 import Crypto
 import BigInt
 import WWCryptoKitC
 
 public struct SchnorrHelper {
+    
     static var magic: (UInt8, UInt8, UInt8, UInt8) { (218, 111, 179, 140) }
 
     // https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki#specification

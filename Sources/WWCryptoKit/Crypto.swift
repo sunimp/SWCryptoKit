@@ -1,10 +1,19 @@
+//
+//  Crypto.swift
+//  WWCryptoKit
+//
+//  Created by Sun on 2024/8/21.
+//
+
+import Foundation
+
 import CommonCrypto
 import Crypto
-import Foundation
 import WWExtensions
 import secp256k1
 
 public enum Crypto {
+    
     public static func hmacSha512(_ data: Data, key: Data) -> Data {
         let symmetricKey = SymmetricKey(data: key)
         return Data(HMAC<SHA512>.authenticationCode(for: data, using: symmetricKey))
@@ -192,24 +201,25 @@ public enum Crypto {
 
 }
 
-public extension Crypto {
-    static func sha256(_ data: Data) -> Data {
+extension Crypto {
+    
+    public static func sha256(_ data: Data) -> Data {
         Data(SHA256.hash(data: data))
     }
 
-    static func ripeMd160(_ data: Data) -> Data {
+    public static func ripeMd160(_ data: Data) -> Data {
         RIPEMD160.hash(data)
     }
 
-    static func doubleSha256(_ data: Data) -> Data {
+    public static func doubleSha256(_ data: Data) -> Data {
         sha256(sha256(data))
     }
 
-    static func ripeMd160Sha256(_ data: Data) -> Data {
+    public static func ripeMd160Sha256(_ data: Data) -> Data {
         ripeMd160(sha256(data))
     }
 
-    static func sha3(_ data: Data) -> Data {
+    public static func sha3(_ data: Data) -> Data {
         Sha3.keccak256(data)
     }
 }
@@ -283,8 +293,9 @@ public enum DerivationCurve {
     }
 }
 
-public extension DerivationCurve {
-    enum DerivationError: Error {
+extension DerivationCurve {
+    
+    public enum DerivationError: Error {
         case invalidCombineTweak
     }
 }
