@@ -9,8 +9,10 @@ import Foundation
 
 import CommonCrypto
 import Crypto
-import WWExtensions
 import secp256k1
+import WWExtensions
+
+// MARK: - Crypto
 
 public enum Crypto {
     
@@ -27,25 +29,28 @@ public enum Crypto {
     public static func deriveKey(password: Data, salt: Data, iterations: Int = 2048, keyLength: Int = 64) -> Data? {
         var derivedKey = Data(repeating: 0, count: keyLength)
 
-        if derivedKey.withUnsafeMutableBytes({ derivedKeyBytes -> Int32 in
-            salt.withUnsafeBytes { saltBytes -> Int32 in
-                guard let saltPointer = saltBytes.bindMemory(to: UInt8.self).baseAddress else { return 1 }
-                guard let derivedKeyPointer = derivedKeyBytes.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return 1 }
+        if
+            derivedKey.withUnsafeMutableBytes({ derivedKeyBytes -> Int32 in
+                salt.withUnsafeBytes { saltBytes -> Int32 in
+                    guard let saltPointer = saltBytes.bindMemory(to: UInt8.self).baseAddress else { return 1 }
+                    guard let derivedKeyPointer = derivedKeyBytes.baseAddress?.assumingMemoryBound(to: UInt8.self)
+                    else { return 1 }
 
-                return password.withUnsafeBytes { unsafeBytes in
-                    let bytes = unsafeBytes.bindMemory(to: CChar.self).baseAddress!
+                    return password.withUnsafeBytes { unsafeBytes in
+                        let bytes = unsafeBytes.bindMemory(to: CChar.self).baseAddress!
 
-                    return CCKeyDerivationPBKDF(
-                        CCPBKDFAlgorithm(kCCPBKDF2),
-                        bytes, password.count,
-                        saltPointer, salt.count,
-                        CCPBKDFAlgorithm(kCCPRFHmacAlgSHA512),
-                        UInt32(iterations),
-                        derivedKeyPointer, keyLength
-                    )
+                        return CCKeyDerivationPBKDF(
+                            CCPBKDFAlgorithm(kCCPBKDF2),
+                            bytes, password.count,
+                            saltPointer, salt.count,
+                            CCPBKDFAlgorithm(kCCPRFHmacAlgSHA512),
+                            UInt32(iterations),
+                            derivedKeyPointer, keyLength
+                        )
+                    }
                 }
-            }
-        }) != 0 {
+            }) != 0
+        {
             print("=> Can't derive key!")
             return nil
         }
@@ -56,21 +61,24 @@ public enum Crypto {
     public static func deriveKeyNonStandard(password: String, salt: Data, iterations: Int = 2048, keyLength: Int = 64) -> Data? {
         var derivedKey = Data(repeating: 0, count: keyLength)
 
-        if derivedKey.withUnsafeMutableBytes({ derivedKeyBytes -> Int32 in
-            salt.withUnsafeBytes { saltBytes -> Int32 in
-                guard let saltPointer = saltBytes.bindMemory(to: UInt8.self).baseAddress else { return 1 }
-                guard let derivedKeyPointer = derivedKeyBytes.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return 1 }
+        if
+            derivedKey.withUnsafeMutableBytes({ derivedKeyBytes -> Int32 in
+                salt.withUnsafeBytes { saltBytes -> Int32 in
+                    guard let saltPointer = saltBytes.bindMemory(to: UInt8.self).baseAddress else { return 1 }
+                    guard let derivedKeyPointer = derivedKeyBytes.baseAddress?.assumingMemoryBound(to: UInt8.self)
+                    else { return 1 }
 
-                return CCKeyDerivationPBKDF(
-                    CCPBKDFAlgorithm(kCCPBKDF2),
-                    password, password.count,
-                    saltPointer, salt.count,
-                    CCPBKDFAlgorithm(kCCPRFHmacAlgSHA512),
-                    UInt32(iterations),
-                    derivedKeyPointer, keyLength
-                )
-            }
-        }) != 0 {
+                    return CCKeyDerivationPBKDF(
+                        CCPBKDFAlgorithm(kCCPBKDF2),
+                        password, password.count,
+                        saltPointer, salt.count,
+                        CCPBKDFAlgorithm(kCCPRFHmacAlgSHA512),
+                        UInt32(iterations),
+                        derivedKeyPointer, keyLength
+                    )
+                }
+            }) != 0
+        {
             print("=> Can't derive key!")
             return nil
         }
@@ -106,24 +114,31 @@ public enum Crypto {
             _ = SecpResult(secp256k1_ec_pubkey_create(context, &pubKeyPoint, privateKey))
 
             return publicKey(pubKeyPoint, compressed: compressed)
+
         case .ed25519:
             let privKey = try? Curve25519.KeyAgreement.PrivateKey(rawRepresentation: privateKey)
             let pubKey = privKey?.publicKey
             return pubKey?.rawRepresentation ?? Data()
-
-            //Todo: not working
+            // Todo: not working
         }
     }
 
     public static func sign(data: Data, privateKey: Data, compact: Bool = false) throws -> Data {
-        precondition(data.count > 0, "Data must be non-zero size")
-        precondition(privateKey.count > 0, "PrivateKey must be non-zero size")
+        precondition(!data.isEmpty, "Data must be non-zero size")
+        precondition(!privateKey.isEmpty, "PrivateKey must be non-zero size")
 
         let ctx = secp256k1.Context.rawRepresentation
 
         let signature = UnsafeMutablePointer<secp256k1_ecdsa_signature>.allocate(capacity: 1)
         let status = data.withUnsafeBytes { ptr in
-            privateKey.withUnsafeBytes { secp256k1_ecdsa_sign(ctx, signature, ptr.baseAddress!.assumingMemoryBound(to: UInt8.self), $0.baseAddress!.assumingMemoryBound(to: UInt8.self), nil, nil) }
+            privateKey.withUnsafeBytes { secp256k1_ecdsa_sign(
+                ctx,
+                signature,
+                ptr.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                $0.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                nil,
+                nil
+            ) }
         }
         guard status == 1 else { throw SignError.signFailed }
 
@@ -137,13 +152,24 @@ public enum Crypto {
 
         var length: size_t = compact ? 64 : 128
         var der = Data(count: length)
-        guard der.withUnsafeMutableBytes({
-            if compact {
-                return secp256k1_ecdsa_signature_serialize_compact(ctx, $0.baseAddress!.assumingMemoryBound(to: UInt8.self), normalizedsig)
-            } else {
-                return secp256k1_ecdsa_signature_serialize_der(ctx, $0.baseAddress!.assumingMemoryBound(to: UInt8.self), &length, normalizedsig)
-            }
-        }) == Int32(1) else {
+        guard
+            der.withUnsafeMutableBytes({
+                if compact {
+                    secp256k1_ecdsa_signature_serialize_compact(
+                        ctx,
+                        $0.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                        normalizedsig
+                    )
+                } else {
+                    secp256k1_ecdsa_signature_serialize_der(
+                        ctx,
+                        $0.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                        &length,
+                        normalizedsig
+                    )
+                }
+            }) == Int32(1)
+        else {
             throw SignError.noEnoughSpace
         }
         der.count = length
@@ -160,14 +186,16 @@ public enum Crypto {
     }
 
     public static func ellipticIsValid(signature: Data, of hash: Data, publicKey: Data, compressed: Bool) -> Bool {
-        guard let recoveredPublicKey = ellipticPublicKey(signature: signature, of: hash, compressed: compressed) else { return false }
+        guard let recoveredPublicKey = ellipticPublicKey(signature: signature, of: hash, compressed: compressed)
+        else { return false }
         return recoveredPublicKey == publicKey
     }
 
     public static func ellipticPublicKey(signature: Data, of hash: Data, compressed: Bool) -> Data? {
         let encrypter = EllipticCurveEncrypterSecp256k1()
         var signatureInInternalFormat = encrypter.import(signature: signature)
-        guard var publicKeyInInternalFormat = encrypter.publicKey(signature: &signatureInInternalFormat, hash: hash) else { return nil }
+        guard var publicKeyInInternalFormat = encrypter.publicKey(signature: &signatureInInternalFormat, hash: hash)
+        else { return nil }
         return encrypter.export(publicKey: &publicKeyInInternalFormat, compressed: compressed)
     }
 
@@ -182,7 +210,7 @@ public enum Crypto {
         storage.append(b)
 
         for i in 0 ..< 2 {
-            withUnsafePointer(to: &storage[i]) { (ptr) -> Void in
+            withUnsafePointer(to: &storage[i]) { ptr in
                 pointers.advanced(by: i).pointee = ptr
             }
         }
@@ -190,9 +218,11 @@ public enum Crypto {
 
         // Combine to points to found new point (new public Key)
         var combinedKey = secp256k1_pubkey()
-        if withUnsafeMutablePointer(to: &combinedKey, { (combinedKeyPtr: UnsafeMutablePointer<secp256k1_pubkey>) -> Int32 in
-            secp256k1_ec_pubkey_combine(secp256k1.Context.rawRepresentation, combinedKeyPtr, immutablePointer, 2)
-        }) == 0 {
+        if
+            withUnsafeMutablePointer(to: &combinedKey, { (combinedKeyPtr: UnsafeMutablePointer<secp256k1_pubkey>) -> Int32 in
+                secp256k1_ec_pubkey_combine(secp256k1.Context.rawRepresentation, combinedKeyPtr, immutablePointer, 2)
+            }) == 0
+        {
             throw SignError.additionError
         }
 
@@ -224,6 +254,8 @@ extension Crypto {
     }
 }
 
+// MARK: - SecpResult
+
 enum SecpResult {
     case success
     case failure
@@ -238,11 +270,15 @@ enum SecpResult {
     }
 }
 
+// MARK: - SignError
+
 public enum SignError: Error {
     case signFailed
     case noEnoughSpace
     case additionError
 }
+
+// MARK: - DerivationCurve
 
 public enum DerivationCurve {
     case secp256k1
@@ -250,15 +286,15 @@ public enum DerivationCurve {
 
     public var bip32SeedSalt: Data {
         switch self {
-        case .secp256k1: return "Bitcoin seed".data(using: .ascii)!
-        case .ed25519: return "ed25519 seed".data(using: .ascii)!
+        case .secp256k1: "Bitcoin seed".data(using: .ascii)!
+        case .ed25519: "ed25519 seed".data(using: .ascii)!
         }
     }
 
     public var supportNonHardened: Bool {
         switch self {
-        case .secp256k1: return true
-        case .ed25519: return false
+        case .secp256k1: true
+        case .ed25519: false
         }
     }
 
@@ -275,23 +311,29 @@ public enum DerivationCurve {
             }
 
             var rawVariable = parentPrivateKey
-            if rawVariable.withUnsafeMutableBytes({ privateKeyBytes -> Int32 in
-                childKey.withUnsafeBytes { factorBytes -> Int32 in
-                    guard let factorPointer = factorBytes.bindMemory(to: UInt8.self).baseAddress else { return 0 }
-                    guard let privateKeyPointer = privateKeyBytes.baseAddress?
-                        .assumingMemoryBound(to: UInt8.self)
-                    else { return 0 }
-                    return secp256k1_ec_seckey_tweak_add(context, privateKeyPointer, factorPointer)
-                }
-            }) == 0 {
+            if
+                rawVariable.withUnsafeMutableBytes({ privateKeyBytes -> Int32 in
+                    childKey.withUnsafeBytes { factorBytes -> Int32 in
+                        guard let factorPointer = factorBytes.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                        guard
+                            let privateKeyPointer = privateKeyBytes.baseAddress?
+                                .assumingMemoryBound(to: UInt8.self)
+                        else { return 0 }
+                        return secp256k1_ec_seckey_tweak_add(context, privateKeyPointer, factorPointer)
+                    }
+                }) == 0
+            {
                 throw DerivationError.invalidCombineTweak
             }
             return Data(rawVariable)
+
         case .ed25519:
             return childKey
         }
     }
 }
+
+// MARK: DerivationCurve.DerivationError
 
 extension DerivationCurve {
     

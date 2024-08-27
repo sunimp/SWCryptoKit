@@ -7,16 +7,16 @@
 
 import Foundation
 
-import secp256k1
-import Crypto
 import BigInt
+import Crypto
+import secp256k1
 import WWCryptoKitC
 
-public struct SchnorrHelper {
+public enum SchnorrHelper {
     
     static var magic: (UInt8, UInt8, UInt8, UInt8) { (218, 111, 179, 140) }
 
-    // https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki#specification
+    /// https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki#specification
     public static func liftX(x: Data) throws -> Data {
         let x = BigUInt(x)
         let p = BigUInt("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", radix: 16)! // secp256k1 field size
@@ -47,17 +47,21 @@ public struct SchnorrHelper {
             secp256k1_fe_clear(&yCoordinateField)
         }
 
-        guard xCoordinateBytes.withUnsafeBytes({ rawBytes -> Bool in
-            guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return false }
-            return secp256k1_fe_set_b32(&xCoordinateField, rawPointer) == 1
-        }) else {
+        guard
+            xCoordinateBytes.withUnsafeBytes({ rawBytes -> Bool in
+                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return false }
+                return secp256k1_fe_set_b32(&xCoordinateField, rawPointer) == 1
+            })
+        else {
             throw SchnorrError.liftXError
         }
 
-        guard yCoordinateBytes.withUnsafeBytes({ rawBytes -> Bool in
-            guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return false }
-            return secp256k1_fe_set_b32(&yCoordinateField, rawPointer) == 1
-        }) else {
+        guard
+            yCoordinateBytes.withUnsafeBytes({ rawBytes -> Bool in
+                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return false }
+                return secp256k1_fe_set_b32(&yCoordinateField, rawPointer) == 1
+            })
+        else {
             throw SchnorrError.liftXError
         }
 
@@ -69,7 +73,7 @@ public struct SchnorrHelper {
         secp256k1_fe_get_b32(&keyBytes[0], &xCoordinateField)
         secp256k1_fe_get_b32(&keyBytes[32], &yCoordinateField)
 
-        return Data(from: SECP256K1_TAG_PUBKEY_UNCOMPRESSED)[0..<1] + Data(keyBytes)
+        return Data(from: SECP256K1_TAG_PUBKEY_UNCOMPRESSED)[0 ..< 1] + Data(keyBytes)
     }
     
     public static func hashTweak(data: Data, tag: String) throws -> Data {
@@ -79,27 +83,35 @@ public struct SchnorrHelper {
         return try Data(SHA256.taggedHash(tag: tagBytes, data: data).bytes)
     }
 
-    // https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki#address-derivation
+    /// https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki#address-derivation
     public static func tweakedOutputKey(publicKey: Data) throws -> Data {
         // internal_key = lift_x(derived_key)
         // hashTapTweak(bytes(P))
-        let internalKeyBytes = try liftX(x: publicKey[1..<33]).bytes
-        let tweakedHash = try hashTweak(data: Data(internalKeyBytes[1..<33]), tag: "TapTweak")
+        let internalKeyBytes = try liftX(x: publicKey[1 ..< 33]).bytes
+        let tweakedHash = try hashTweak(data: Data(internalKeyBytes[1 ..< 33]), tag: "TapTweak")
 
         // int(hashTapTweak(bytes(P)))G
         var tweakedPublicKey = secp256k1_pubkey()
-        guard secp256k1_ec_seckey_verify(secp256k1.Context.rawRepresentation, tweakedHash.bytes) == 1,
-              secp256k1_ec_pubkey_create(secp256k1.Context.rawRepresentation, &tweakedPublicKey, tweakedHash.bytes) == 1
+        guard
+            secp256k1_ec_seckey_verify(secp256k1.Context.rawRepresentation, tweakedHash.bytes) == 1,
+            secp256k1_ec_pubkey_create(secp256k1.Context.rawRepresentation, &tweakedPublicKey, tweakedHash.bytes) == 1
         else {
             throw SchnorrError.keyTweakError
         }
 
         // P + int(hashTapTweak(bytes(P)))G
         var internalKey = secp256k1_pubkey()
-        guard internalKeyBytes.withUnsafeBytes({ rawBytes -> Int32 in
-            guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return 0 }
-            return secp256k1_ec_pubkey_parse(secp256k1.Context.rawRepresentation, &internalKey, rawPointer, internalKeyBytes.count)
-        }) == 1 else {
+        guard
+            internalKeyBytes.withUnsafeBytes({ rawBytes -> Int32 in
+                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                return secp256k1_ec_pubkey_parse(
+                    secp256k1.Context.rawRepresentation,
+                    &internalKey,
+                    rawPointer,
+                    internalKeyBytes.count
+                )
+            }) == 1
+        else {
             throw SchnorrError.keyTweakError
         }
 
@@ -107,40 +119,58 @@ public struct SchnorrHelper {
         var pubKeyLen = 33
         var outputKeyBytes = [UInt8](repeating: 0, count: pubKeyLen)
 
-        guard secp256k1_ec_pubkey_serialize(secp256k1.Context.rawRepresentation, &outputKeyBytes, &pubKeyLen, &outputKey, secp256k1.Format.compressed.rawValue) == 1 else {
+        guard
+            secp256k1_ec_pubkey_serialize(
+                secp256k1.Context.rawRepresentation,
+                &outputKeyBytes,
+                &pubKeyLen,
+                &outputKey,
+                secp256k1.Format.compressed.rawValue
+            ) == 1
+        else {
             throw SchnorrError.keyTweakError
         }
 
-        return Data(outputKeyBytes[1..<33])
+        return Data(outputKeyBytes[1 ..< 33])
     }
 
     public static func tweakedPrivateKey(privateKey: Data, publicKey: Data) throws -> Data {
         // internal_key = lift_x(derived_key)
         // hashTapTweak(bytes(P))
-        let internalKeyBytes = try liftX(x: publicKey[1..<33]).bytes
-        let tweakedHash = try hashTweak(data: Data(internalKeyBytes[1..<33]), tag: "TapTweak")
+        let internalKeyBytes = try liftX(x: publicKey[1 ..< 33]).bytes
+        let tweakedHash = try hashTweak(data: Data(internalKeyBytes[1 ..< 33]), tag: "TapTweak")
 
         // int(hashTapTweak(bytes(P)))G
         var tweakedPublicKey = secp256k1_pubkey()
-        guard secp256k1_ec_seckey_verify(secp256k1.Context.rawRepresentation, tweakedHash.bytes) == 1,
-              secp256k1_ec_pubkey_create(secp256k1.Context.rawRepresentation, &tweakedPublicKey, tweakedHash.bytes) == 1
+        guard
+            secp256k1_ec_seckey_verify(secp256k1.Context.rawRepresentation, tweakedHash.bytes) == 1,
+            secp256k1_ec_pubkey_create(secp256k1.Context.rawRepresentation, &tweakedPublicKey, tweakedHash.bytes) == 1
         else {
             throw SchnorrError.privateKeyTweakError
         }
 
         // P + int(hashTapTweak(bytes(P)))G
         var internalKey = secp256k1_pubkey()
-        guard internalKeyBytes.withUnsafeBytes({ rawBytes -> Int32 in
-            guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return 0 }
-            return secp256k1_ec_pubkey_parse(secp256k1.Context.rawRepresentation, &internalKey, rawPointer, internalKeyBytes.count)
-        }) == 1 else {
+        guard
+            internalKeyBytes.withUnsafeBytes({ rawBytes -> Int32 in
+                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                return secp256k1_ec_pubkey_parse(
+                    secp256k1.Context.rawRepresentation,
+                    &internalKey,
+                    rawPointer,
+                    internalKeyBytes.count
+                )
+            }) == 1
+        else {
             throw SchnorrError.privateKeyTweakError
         }
 
         let outputKey = try Crypto.addEllipticCurvePoints(a: internalKey, b: tweakedPublicKey)
         var privateBytes = privateKey.bytes
-        guard secp256k1_ec_seckey_tweak_add(secp256k1.Context.rawRepresentation, &privateBytes, tweakedHash.bytes) == 1,
-              secp256k1_ec_seckey_verify(secp256k1.Context.rawRepresentation, privateBytes) == 1 else {
+        guard
+            secp256k1_ec_seckey_tweak_add(secp256k1.Context.rawRepresentation, &privateBytes, tweakedHash.bytes) == 1,
+            secp256k1_ec_seckey_verify(secp256k1.Context.rawRepresentation, privateBytes) == 1
+        else {
             throw SchnorrError.privateKeyTweakError
         }
 
@@ -161,8 +191,10 @@ public struct SchnorrHelper {
                 throw SchnorrError.privateKeyTweakError
             }
 
-            guard secp256k1_ec_seckey_tweak_add(secp256k1.Context.rawRepresentation, &privateBytes, tweakedHash.bytes) == 1,
-                  secp256k1_ec_seckey_verify(secp256k1.Context.rawRepresentation, privateBytes) == 1 else {
+            guard
+                secp256k1_ec_seckey_tweak_add(secp256k1.Context.rawRepresentation, &privateBytes, tweakedHash.bytes) == 1,
+                secp256k1_ec_seckey_verify(secp256k1.Context.rawRepresentation, privateBytes) == 1
+            else {
                 throw SchnorrError.privateKeyTweakError
             }
         }
@@ -175,7 +207,7 @@ public struct SchnorrHelper {
         var message = data.bytes
 
         let auxRandPointer = UnsafeMutableRawPointer.allocate(byteCount: 32, alignment: MemoryLayout<UInt8>.alignment)
-        for i in 0..<32 {
+        for i in 0 ..< 32 {
             auxRandPointer.storeBytes(of: 0x00, toByteOffset: i, as: UInt8.self)
         }
 
@@ -183,8 +215,16 @@ public struct SchnorrHelper {
         var signature = [UInt8](repeating: 0, count: 64)
         var extraParams = secp256k1_schnorrsig_extraparams(magic: magic, noncefp: nil, ndata: auxRandPointer)
 
-        guard secp256k1_keypair_create(secp256k1.Context.rawRepresentation, &keypair, tweakedPrivateKey.bytes) == 1,
-              secp256k1_schnorrsig_sign_custom(secp256k1.Context.rawRepresentation, &signature, &message, message.count, &keypair, &extraParams) == 1
+        guard
+            secp256k1_keypair_create(secp256k1.Context.rawRepresentation, &keypair, tweakedPrivateKey.bytes) == 1,
+            secp256k1_schnorrsig_sign_custom(
+                secp256k1.Context.rawRepresentation,
+                &signature,
+                &message,
+                message.count,
+                &keypair,
+                &extraParams
+            ) == 1
         else {
             throw SchnorrError.signError
         }

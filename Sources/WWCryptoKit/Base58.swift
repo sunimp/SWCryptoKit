@@ -23,11 +23,13 @@ extension WWExtension where Base == Data {
     }
 }
 
-public struct Base58 {
+// MARK: - Base58
+
+public enum Base58 {
     
     static let baseAlphabets = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     static var zeroAlphabet: Character = "1"
-    static var base: Int = 58
+    static var base = 58
 
     static func sizeFromByte(size: Int) -> Int {
         size * 138 / 100 + 1
@@ -45,7 +47,7 @@ public struct Base58 {
         for b in bytes {
             var carry = Int(b)
             var i = 0
-            for j in (0...encodedBytes.count - 1).reversed() where carry != 0 || i < length {
+            for j in (0 ... encodedBytes.count - 1).reversed() where carry != 0 || i < length {
                 carry += 256 * Int(encodedBytes[j])
                 encodedBytes[j] = UInt8(carry % base)
                 carry /= base
@@ -109,7 +111,7 @@ public struct Base58 {
 
             var carry = baseIndex.utf16Offset(in: baseAlphabets)
             var i = 0
-            for j in (0...decodedBytes.count - 1).reversed() where carry != 0 || i < length {
+            for j in (0 ... decodedBytes.count - 1).reversed() where carry != 0 || i < length {
                 carry += base * Int(decodedBytes[j])
                 decodedBytes[j] = UInt8(carry % 256)
                 carry /= 256

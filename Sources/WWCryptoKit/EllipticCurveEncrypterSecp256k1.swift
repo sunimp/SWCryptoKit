@@ -11,7 +11,7 @@ import secp256k1
 
 /// Convenience class over libsecp256k1 methods
 final class EllipticCurveEncrypterSecp256k1 {
-    // holds internal state of the c library
+    /// holds internal state of the c library
     private let context: OpaquePointer
 
     init() {
@@ -32,7 +32,15 @@ final class EllipticCurveEncrypterSecp256k1 {
 
         let status = privateKey.withUnsafeBytes { key -> Int32 in
             hash.withUnsafeBytes { hash -> Int32 in
-                secp256k1_ecdsa_sign_recoverable(context, &signature, hash.baseAddress!.assumingMemoryBound(to: UInt8.self), key.baseAddress!.assumingMemoryBound(to: UInt8.self), nil, nil) }
+                secp256k1_ecdsa_sign_recoverable(
+                    context,
+                    &signature,
+                    hash.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                    key.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                    nil,
+                    nil
+                )
+            }
         }
         return status == 1 ? signature : nil
     }
@@ -45,7 +53,12 @@ final class EllipticCurveEncrypterSecp256k1 {
         var output = Data(count: 65)
         var recid = 0 as Int32
         _ = output.withUnsafeMutableBytes { output in
-            secp256k1_ecdsa_recoverable_signature_serialize_compact(context, output.baseAddress!.assumingMemoryBound(to: UInt8.self), &recid, &signature)
+            secp256k1_ecdsa_recoverable_signature_serialize_compact(
+                context,
+                output.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                &recid,
+                &signature
+            )
         }
 
         output[64] = UInt8(recid)
@@ -62,7 +75,12 @@ final class EllipticCurveEncrypterSecp256k1 {
         var sig = secp256k1_ecdsa_recoverable_signature()
         let recid = Int32(signature[64])
         signature.withUnsafeBytes { input -> Void in
-            secp256k1_ecdsa_recoverable_signature_parse_compact(context, &sig, input.baseAddress!.assumingMemoryBound(to: UInt8.self), recid)
+            secp256k1_ecdsa_recoverable_signature_parse_compact(
+                context,
+                &sig,
+                input.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                recid
+            )
         }
         return sig
     }
@@ -97,7 +115,13 @@ final class EllipticCurveEncrypterSecp256k1 {
         var outputLen: Int = output.count
         let compressedFlags = compressed ? UInt32(SECP256K1_EC_COMPRESSED) : UInt32(SECP256K1_EC_UNCOMPRESSED)
         output.withUnsafeMutableBytes { pointer -> Void in
-            secp256k1_ec_pubkey_serialize(context, pointer.baseAddress!.assumingMemoryBound(to: UInt8.self), &outputLen, &publicKey, compressedFlags)
+            secp256k1_ec_pubkey_serialize(
+                context,
+                pointer.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                &outputLen,
+                &publicKey,
+                compressedFlags
+            )
         }
         return output
     }

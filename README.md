@@ -3,7 +3,7 @@
 HsCryptoKit library include base cryptography. Hashing functions, secp256k1 curve.
 
 ## Requirements
-iOS (13.0, *)
+iOS (14.0, *)
 
 ## Installation
 
@@ -13,19 +13,19 @@ The [Swift Package Manager](https://swift.org/package-manager/) is a tool for au
 and is integrated into the `swift` compiler. It is in early development, but HsCryptoKit does support its use on
 supported platforms.
 
-Once you have your Swift package set up, adding HdWalletKit as a dependency is as easy as adding it to
+Once you have your Swift package set up, adding HDWalletKit as a dependency is as easy as adding it to
 the `dependencies` value of your `Package.swift`.
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/horizontalsystems/HsCryptoKit.Swift.git", .upToNextMajor(from: "1.0.0")),
+    .package(url: "https://github.com/sunimp/WWCryptoKit.Swift.git", .upToNextMajor(from: "1.3.5")),
 ]
 ```
 
 for target: []
 ```swift
 dependencies: [
-    .product(name: "HsCryptoKit", package: "HsCryptoKit.Swift"),
+    .product(name: "WWCryptoKit", package: "WWCryptoKit.Swift"),
 ]
 ```
 

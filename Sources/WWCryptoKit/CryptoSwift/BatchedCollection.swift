@@ -13,64 +13,72 @@
 //  - This notice may not be removed or altered from any source or binary distribution.
 //
 
+// MARK: - BatchedCollectionIndex
+
 struct BatchedCollectionIndex<Base: Collection> {
     let range: Range<Base.Index>
 }
 
+// MARK: Comparable
+
 extension BatchedCollectionIndex: Comparable {
-    static func ==(lhs: BatchedCollectionIndex<Base>, rhs: BatchedCollectionIndex<Base>) -> Bool {
-        return lhs.range.lowerBound == rhs.range.lowerBound
+    static func == (lhs: BatchedCollectionIndex<Base>, rhs: BatchedCollectionIndex<Base>) -> Bool {
+        lhs.range.lowerBound == rhs.range.lowerBound
     }
 
-    static func <(lhs: BatchedCollectionIndex<Base>, rhs: BatchedCollectionIndex<Base>) -> Bool {
-        return lhs.range.lowerBound < rhs.range.lowerBound
+    static func < (lhs: BatchedCollectionIndex<Base>, rhs: BatchedCollectionIndex<Base>) -> Bool {
+        lhs.range.lowerBound < rhs.range.lowerBound
     }
 }
+
+// MARK: - BatchedCollectionType
 
 protocol BatchedCollectionType: Collection {
     associatedtype Base: Collection
 }
+
+// MARK: - BatchedCollection
 
 struct BatchedCollection<Base: Collection>: Collection {
     let base: Base
     let size: Int
     typealias Index = BatchedCollectionIndex<Base>
     private func nextBreak(after idx: Base.Index) -> Base.Index {
-        return base.index(idx, offsetBy: size, limitedBy: base.endIndex) ?? base.endIndex
+        base.index(idx, offsetBy: size, limitedBy: base.endIndex) ?? base.endIndex
     }
 
     var startIndex: Index {
-        return Index(range: base.startIndex..<nextBreak(after: base.startIndex))
+        Index(range: base.startIndex ..< nextBreak(after: base.startIndex))
     }
 
     var endIndex: Index {
-        return Index(range: base.endIndex..<base.endIndex)
+        Index(range: base.endIndex ..< base.endIndex)
     }
 
     func index(after idx: Index) -> Index {
-        return Index(range: idx.range.upperBound..<nextBreak(after: idx.range.upperBound))
+        Index(range: idx.range.upperBound ..< nextBreak(after: idx.range.upperBound))
     }
 
     subscript(idx: Index) -> Base.SubSequence {
-        return base[idx.range]
+        base[idx.range]
     }
 }
 
 extension Collection {
     func batched(by size: Int) -> BatchedCollection<Self> {
-        return BatchedCollection(base: self, size: size)
+        BatchedCollection(base: self, size: size)
     }
 }
 
-extension Collection where Self.Element == UInt8, Self.Index == Int {
+extension Collection<UInt8> where Self.Index == Int {
 
-    // Big endian order
-    var uInt64Array: Array<UInt64> {
+    /// Big endian order
+    var uInt64Array: [UInt64] {
         if isEmpty {
             return []
         }
 
-        var result = Array<UInt64>(reserveCapacity: 32)
+        var result = [UInt64](reserveCapacity: 32)
         for idx in stride(from: startIndex, to: endIndex, by: 8) {
             let val = UInt64(bytes: self, fromIndex: idx).bigEndian
             result.append(val)

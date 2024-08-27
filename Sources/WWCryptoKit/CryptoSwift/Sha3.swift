@@ -22,12 +22,12 @@ import Foundation
 extension Array {
 
     public init(reserveCapacity: Int) {
-        self = Array<Element>()
+        self = [Element]()
         self.reserveCapacity(reserveCapacity)
     }
 
     public var slice: ArraySlice<Element> {
-        self[self.startIndex ..< self.endIndex]
+        self[startIndex ..< endIndex]
     }
 
 }
@@ -59,13 +59,15 @@ extension UInt64 {
     }
 
     func rotateLeft(by: UInt8) -> UInt64 {
-        return (self << by) | (self >> (64 - by))
+        (self << by) | (self >> (64 - by))
     }
 
 }
 
-public final class Sha3 {
-    private static let round_constants: Array<UInt64> = [
+// MARK: - Sha3
+
+public enum Sha3 {
+    private static let round_constants: [UInt64] = [
         0x0000000000000001, 0x0000000000008082, 0x800000000000808a, 0x8000000080008000,
         0x000000000000808b, 0x0000000080000001, 0x8000000080008081, 0x8000000000008009,
         0x000000000000008a, 0x0000000000000088, 0x0000000080008009, 0x000000008000000a,
@@ -75,13 +77,13 @@ public final class Sha3 {
     ]
 
     // Parameters for Keccak256
-    static let blockSize: Int = 136
-    static let digestLength: Int = 32
+    static let blockSize = 136
+    static let digestLength = 32
     static let markByte: UInt8 = 0x01
 
     public static func keccak256(_ data: Data) -> Data {
-        var accumulated = Array<UInt8>()
-        var accumulatedHash = Array<UInt64>(repeating: 0, count: digestLength)
+        var accumulated = [UInt8]()
+        var accumulatedHash = [UInt64](repeating: 0, count: digestLength)
 
         accumulated += Array(data).slice
 
@@ -90,7 +92,7 @@ public final class Sha3 {
 
         // We need to always pad the input. Even if the input is a multiple of blockSize.
         let q = blockSize - (accumulated.count % blockSize)
-        accumulated += Array<UInt8>(repeating: 0, count: q)
+        accumulated += [UInt8](repeating: 0, count: q)
 
         accumulated[markByteIndex] |= markByte
         accumulated[accumulated.count - 1] |= 0x80
@@ -99,20 +101,20 @@ public final class Sha3 {
             process(block: chunk.uInt64Array.slice, currentHash: &accumulatedHash)
         }
 
-        let result = accumulatedHash.reduce(Array<UInt8>()) { (result, value) -> Array<UInt8> in
+        let result = accumulatedHash.reduce([UInt8]()) { result, value -> [UInt8] in
             return result + bigEndianBytes(from: value)
         }
 
-        return Data(result[0..<digestLength])
+        return Data(result[0 ..< digestLength])
     }
 
-    static func bigEndianBytes(from value: UInt64) -> Array<UInt8> {
+    static func bigEndianBytes(from value: UInt64) -> [UInt8] {
         let valuePointer = UnsafeMutablePointer<UInt64>.allocate(capacity: 1)
         valuePointer.pointee = value
 
         let bytesPointer = UnsafeMutablePointer<UInt8>(OpaquePointer(valuePointer))
-        var bytes = Array<UInt8>(repeating: 0, count: 8)
-        for j in 0..<8 {
+        var bytes = [UInt8](repeating: 0, count: 8)
+        for j in 0 ..< 8 {
             bytes[j] = (bytesPointer + j).pointee
         }
 
@@ -128,7 +130,7 @@ public final class Sha3 {
     ///     D[x,z]=C[(x1) mod 5, z] ⊕ C[(x+1) mod 5, (z –1) mod w].
     ///  3. For all triples (x, y, z) such that 0≤x<5, 0≤y<5, and 0≤z<w, let
     ///     A′[x, y,z] = A[x, y,z] ⊕ D[x,z].
-    private static func θ(_ a: inout Array<UInt64>) {
+    private static func θ(_ a: inout [UInt64]) {
         let c = UnsafeMutablePointer<UInt64>.allocate(capacity: 5)
         c.initialize(repeating: 0, count: 5)
         defer {
@@ -142,7 +144,7 @@ public final class Sha3 {
             d.deallocate()
         }
 
-        for i in 0..<5 {
+        for i in 0 ..< 5 {
             c[i] = a[i] ^ a[i &+ 5] ^ a[i &+ 10] ^ a[i &+ 15] ^ a[i &+ 20]
         }
 
@@ -152,7 +154,7 @@ public final class Sha3 {
         d[3] = c[4].rotateLeft(by: 1) ^ c[2]
         d[4] = c[0].rotateLeft(by: 1) ^ c[3]
 
-        for i in 0..<5 {
+        for i in 0 ..< 5 {
             a[i] ^= d[i]
             a[i &+ 5] ^= d[i]
             a[i &+ 10] ^= d[i]
@@ -162,7 +164,7 @@ public final class Sha3 {
     }
 
     /// A′[x, y, z]=A[(x &+ 3y) mod 5, x, z]
-    private static func π(_ a: inout Array<UInt64>) {
+    private static func π(_ a: inout [UInt64]) {
         let a1 = a[1]
         a[1] = a[6]
         a[6] = a[9]
@@ -192,7 +194,7 @@ public final class Sha3 {
 
     /// For all triples (x, y, z) such that 0≤x<5, 0≤y<5, and 0≤z<w, let
     /// A′[x, y,z] = A[x, y,z] ⊕ ((A[(x+1) mod 5, y, z] ⊕ 1) ⋅ A[(x+2) mod 5, y, z])
-    private static func χ(_ a: inout Array<UInt64>) {
+    private static func χ(_ a: inout [UInt64]) {
         for i in stride(from: 0, to: 25, by: 5) {
             let a0 = a[0 &+ i]
             let a1 = a[1 &+ i]
@@ -204,11 +206,11 @@ public final class Sha3 {
         }
     }
 
-    private static func ι(_ a: inout Array<UInt64>, round: Int) {
+    private static func ι(_ a: inout [UInt64], round: Int) {
         a[0] ^= round_constants[round]
     }
 
-    fileprivate static func process(block chunk: ArraySlice<UInt64>, currentHash hh: inout Array<UInt64>) {
+    fileprivate static func process(block chunk: ArraySlice<UInt64>, currentHash hh: inout [UInt64]) {
         // expand
         hh[0] ^= chunk[0].littleEndian
         hh[1] ^= chunk[1].littleEndian
@@ -246,7 +248,7 @@ public final class Sha3 {
         }
 
         // Keccak-f
-        for round in 0..<24 {
+        for round in 0 ..< 24 {
             θ(&hh)
 
             hh[1] = hh[1].rotateLeft(by: 1)
@@ -282,29 +284,30 @@ public final class Sha3 {
 
 }
 
+// MARK: - KeccakDigest
+
 public class KeccakDigest {
     
     private var lastBlock = Data()
-    private var accumulatedHash = Array<UInt64>(repeating: 0, count: Sha3.digestLength)
+    private var accumulatedHash = [UInt64](repeating: 0, count: Sha3.digestLength)
 
-    public init() {
-    }
+    public init() { }
     
     public func update(with data: Data) {
         var data = data
 
-        if lastBlock.count > 0 {
+        if !lastBlock.isEmpty {
             data = lastBlock + data
         }
 
         let fullBlocksLength = (data.count / Sha3.blockSize) * Sha3.blockSize
-        lastBlock = data.subdata(in: fullBlocksLength..<data.count)
+        lastBlock = data.subdata(in: fullBlocksLength ..< data.count)
 
         guard fullBlocksLength > 0 else {
             return
         }
         
-        let accumulated = Array(data.subdata(in: 0..<fullBlocksLength)).slice
+        let accumulated = Array(data.subdata(in: 0 ..< fullBlocksLength)).slice
         
         for chunk in accumulated.batched(by: Sha3.blockSize) {
             Sha3.process(block: chunk.uInt64Array.slice, currentHash: &accumulatedHash)
@@ -314,7 +317,7 @@ public class KeccakDigest {
     public func digest() -> Data {
         var digest = accumulatedHash
         
-        if lastBlock.count > 0 {
+        if !lastBlock.isEmpty {
             var accumulated = Array(lastBlock).slice
             
             // Add padding
@@ -322,14 +325,14 @@ public class KeccakDigest {
             
             // We need to always pad the input. Even if the input is a multiple of blockSize.
             let q = Sha3.blockSize - (accumulated.count % Sha3.blockSize)
-            accumulated += Array<UInt8>(repeating: 0, count: q)
+            accumulated += [UInt8](repeating: 0, count: q)
             
             accumulated[markByteIndex] |= Sha3.markByte
             accumulated[accumulated.count - 1] |= 0x80
             
             Sha3.process(block: accumulated.uInt64Array.slice, currentHash: &digest)
         } else {
-            var accumulated = Array<UInt8>(repeating: 0, count: Sha3.blockSize)
+            var accumulated = [UInt8](repeating: 0, count: Sha3.blockSize)
 
             accumulated[0] |= Sha3.markByte
             accumulated[accumulated.count - 1] |= 0x80
@@ -337,11 +340,11 @@ public class KeccakDigest {
             Sha3.process(block: accumulated.uInt64Array.slice, currentHash: &digest)
         }
         
-        let result = digest.reduce(Array<UInt8>()) { (result, value) -> Array<UInt8> in
+        let result = digest.reduce([UInt8]()) { result, value -> [UInt8] in
             return result + Sha3.bigEndianBytes(from: value)
         }
         
-        return Data(result[0..<Sha3.digestLength])
+        return Data(result[0 ..< Sha3.digestLength])
     }
     
 }
