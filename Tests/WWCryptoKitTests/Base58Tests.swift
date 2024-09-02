@@ -1,15 +1,16 @@
 //
 //  Base58Tests.swift
-//  WWCryptoKitTests
 //
-//  Created by Sun on 2024/8/21.
+//  Created by Sun on 2022/9/30.
 //
 
+@testable import WWCryptoKit
 import WWExtensions
 import XCTest
-@testable import WWCryptoKit
 
 final class Base58Tests: XCTestCase {
+    // MARK: Properties
+
     private let testVectors = [
         ["", ""],
         ["61", "2g"],
@@ -33,6 +34,8 @@ final class Base58Tests: XCTestCase {
         ],
     ]
 
+    // MARK: Functions
+
     func testExample() throws {
         for pair in testVectors {
             let hex = pair[0]
@@ -42,5 +45,4 @@ final class Base58Tests: XCTestCase {
             XCTAssertEqual(result.ww.decodeBase58.ww.hex, hex)
         }
     }
-
 }

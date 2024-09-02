@@ -1,8 +1,7 @@
 //
 //  SchnorrHelper.swift
-//  WWCryptoKit
 //
-//  Created by Sun on 2024/8/21.
+//  Created by Sun on 2023/3/14.
 //
 
 import Foundation
@@ -13,13 +12,29 @@ import secp256k1
 import WWCryptoKitC
 
 public enum SchnorrHelper {
-    
+    // MARK: Nested Types
+
+    public enum SchnorrError: Error {
+        case liftXError
+        case privateKeyTweakError
+        case keyTweakError
+        case signError
+        case hashTweakError
+    }
+
+    // MARK: Static Properties
+
     static var magic: (UInt8, UInt8, UInt8, UInt8) { (218, 111, 179, 140) }
+
+    // MARK: Static Functions
 
     /// https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki#specification
     public static func liftX(x: Data) throws -> Data {
         let x = BigUInt(x)
-        let p = BigUInt("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", radix: 16)! // secp256k1 field size
+        let p = BigUInt(
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F",
+            radix: 16
+        )! // secp256k1 field size
 
         guard x < p else {
             throw SchnorrError.liftXError
@@ -49,7 +64,9 @@ public enum SchnorrHelper {
 
         guard
             xCoordinateBytes.withUnsafeBytes({ rawBytes -> Bool in
-                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return false }
+                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else {
+                    return false
+                }
                 return secp256k1_fe_set_b32(&xCoordinateField, rawPointer) == 1
             })
         else {
@@ -58,7 +75,9 @@ public enum SchnorrHelper {
 
         guard
             yCoordinateBytes.withUnsafeBytes({ rawBytes -> Bool in
-                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return false }
+                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else {
+                    return false
+                }
                 return secp256k1_fe_set_b32(&yCoordinateField, rawPointer) == 1
             })
         else {
@@ -103,7 +122,9 @@ public enum SchnorrHelper {
         var internalKey = secp256k1_pubkey()
         guard
             internalKeyBytes.withUnsafeBytes({ rawBytes -> Int32 in
-                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else {
+                    return 0
+                }
                 return secp256k1_ec_pubkey_parse(
                     secp256k1.Context.rawRepresentation,
                     &internalKey,
@@ -153,7 +174,9 @@ public enum SchnorrHelper {
         var internalKey = secp256k1_pubkey()
         guard
             internalKeyBytes.withUnsafeBytes({ rawBytes -> Int32 in
-                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                guard let rawPointer = rawBytes.bindMemory(to: UInt8.self).baseAddress else {
+                    return 0
+                }
                 return secp256k1_ec_pubkey_parse(
                     secp256k1.Context.rawRepresentation,
                     &internalKey,
@@ -192,7 +215,8 @@ public enum SchnorrHelper {
             }
 
             guard
-                secp256k1_ec_seckey_tweak_add(secp256k1.Context.rawRepresentation, &privateBytes, tweakedHash.bytes) == 1,
+                secp256k1_ec_seckey_tweak_add(secp256k1.Context.rawRepresentation, &privateBytes, tweakedHash.bytes) ==
+                1,
                 secp256k1_ec_seckey_verify(secp256k1.Context.rawRepresentation, privateBytes) == 1
             else {
                 throw SchnorrError.privateKeyTweakError
@@ -231,13 +255,4 @@ public enum SchnorrHelper {
 
         return Data(signature)
     }
-
-    public enum SchnorrError: Error {
-        case liftXError
-        case privateKeyTweakError
-        case keyTweakError
-        case signError
-        case hashTweakError
-    }
-
 }

@@ -1,3 +1,9 @@
+//
+//  Sha3.swift
+//
+//  Created by Sun on 2022/10/3.
+//
+
 import Foundation
 
 //
@@ -8,10 +14,13 @@ import Foundation
 //
 //  In no event will the authors be held liable for any damages arising from the use of this software.
 //
-//  Permission is granted to anyone to use this software for any purpose,including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
+//  Permission is granted to anyone to use this software for any purpose,including commercial applications, and to alter
+//  it and redistribute it freely, subject to the following restrictions:
 //
-//  - The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation is required.
-//  - Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
+//  - The origin of this software must not be misrepresented; you must not claim that you wrote the original software.
+//  If you use this software in a product, an acknowledgment in the product documentation is required.
+//  - Altered source versions must be plainly marked as such, and must not be misrepresented as being the original
+//  software.
 //  - This notice may not be removed or altered from any source or binary distribution.
 //
 
@@ -20,7 +29,6 @@ import Foundation
 //
 
 extension Array {
-
     public init(reserveCapacity: Int) {
         self = [Element]()
         self.reserveCapacity(reserveCapacity)
@@ -29,11 +37,9 @@ extension Array {
     public var slice: ArraySlice<Element> {
         self[startIndex ..< endIndex]
     }
-
 }
 
 extension UInt64 {
-
     init<T: Collection>(bytes: T) where T.Element == UInt8, T.Index == Int {
         self = UInt64(bytes: bytes, fromIndex: bytes.startIndex)
     }
@@ -61,25 +67,28 @@ extension UInt64 {
     func rotateLeft(by: UInt8) -> UInt64 {
         (self << by) | (self >> (64 - by))
     }
-
 }
 
 // MARK: - Sha3
 
 public enum Sha3 {
-    private static let round_constants: [UInt64] = [
-        0x0000000000000001, 0x0000000000008082, 0x800000000000808a, 0x8000000080008000,
-        0x000000000000808b, 0x0000000080000001, 0x8000000080008081, 0x8000000000008009,
-        0x000000000000008a, 0x0000000000000088, 0x0000000080008009, 0x000000008000000a,
-        0x000000008000808b, 0x800000000000008b, 0x8000000000008089, 0x8000000000008003,
-        0x8000000000008002, 0x8000000000000080, 0x000000000000800a, 0x800000008000000a,
-        0x8000000080008081, 0x8000000000008080, 0x0000000080000001, 0x8000000080008008,
-    ]
+    // MARK: Static Properties
 
     // Parameters for Keccak256
     static let blockSize = 136
     static let digestLength = 32
     static let markByte: UInt8 = 0x01
+
+    private static let round_constants: [UInt64] = [
+        0x0000000000000001, 0x0000000000008082, 0x800000000000808A, 0x8000000080008000,
+        0x000000000000808B, 0x0000000080000001, 0x8000000080008081, 0x8000000000008009,
+        0x000000000000008A, 0x0000000000000088, 0x0000000080008009, 0x000000008000000A,
+        0x000000008000808B, 0x800000000000008B, 0x8000000000008089, 0x8000000000008003,
+        0x8000000000008002, 0x8000000000000080, 0x000000000000800A, 0x800000008000000A,
+        0x8000000080008081, 0x8000000000008080, 0x0000000080000001, 0x8000000080008008,
+    ]
+
+    // MARK: Static Functions
 
     public static func keccak256(_ data: Data) -> Data {
         var accumulated = [UInt8]()
@@ -122,6 +131,78 @@ public enum Sha3 {
         valuePointer.deallocate()
 
         return bytes
+    }
+
+    fileprivate static func process(block chunk: ArraySlice<UInt64>, currentHash hh: inout [UInt64]) {
+        // expand
+        hh[0] ^= chunk[0].littleEndian
+        hh[1] ^= chunk[1].littleEndian
+        hh[2] ^= chunk[2].littleEndian
+        hh[3] ^= chunk[3].littleEndian
+        hh[4] ^= chunk[4].littleEndian
+        hh[5] ^= chunk[5].littleEndian
+        hh[6] ^= chunk[6].littleEndian
+        hh[7] ^= chunk[7].littleEndian
+        hh[8] ^= chunk[8].littleEndian
+        if blockSize > 72 { // 72 / 8, sha-512
+            hh[9] ^= chunk[9].littleEndian
+            hh[10] ^= chunk[10].littleEndian
+            hh[11] ^= chunk[11].littleEndian
+            hh[12] ^= chunk[12].littleEndian
+            if blockSize > 104 { // 104 / 8, sha-384
+                hh[13] ^= chunk[13].littleEndian
+                hh[14] ^= chunk[14].littleEndian
+                hh[15] ^= chunk[15].littleEndian
+                hh[16] ^= chunk[16].littleEndian
+                if blockSize > 136 { // 136 / 8, sha-256
+                    hh[17] ^= chunk[17].littleEndian
+                    // FULL_SHA3_FAMILY_SUPPORT
+                    if blockSize > 144 { // 144 / 8, sha-224
+                        hh[18] ^= chunk[18].littleEndian
+                        hh[19] ^= chunk[19].littleEndian
+                        hh[20] ^= chunk[20].littleEndian
+                        hh[21] ^= chunk[21].littleEndian
+                        hh[22] ^= chunk[22].littleEndian
+                        hh[23] ^= chunk[23].littleEndian
+                        hh[24] ^= chunk[24].littleEndian
+                    }
+                }
+            }
+        }
+
+        // Keccak-f
+        for round in 0 ..< 24 {
+            θ(&hh)
+
+            hh[1] = hh[1].rotateLeft(by: 1)
+            hh[2] = hh[2].rotateLeft(by: 62)
+            hh[3] = hh[3].rotateLeft(by: 28)
+            hh[4] = hh[4].rotateLeft(by: 27)
+            hh[5] = hh[5].rotateLeft(by: 36)
+            hh[6] = hh[6].rotateLeft(by: 44)
+            hh[7] = hh[7].rotateLeft(by: 6)
+            hh[8] = hh[8].rotateLeft(by: 55)
+            hh[9] = hh[9].rotateLeft(by: 20)
+            hh[10] = hh[10].rotateLeft(by: 3)
+            hh[11] = hh[11].rotateLeft(by: 10)
+            hh[12] = hh[12].rotateLeft(by: 43)
+            hh[13] = hh[13].rotateLeft(by: 25)
+            hh[14] = hh[14].rotateLeft(by: 39)
+            hh[15] = hh[15].rotateLeft(by: 41)
+            hh[16] = hh[16].rotateLeft(by: 45)
+            hh[17] = hh[17].rotateLeft(by: 15)
+            hh[18] = hh[18].rotateLeft(by: 21)
+            hh[19] = hh[19].rotateLeft(by: 8)
+            hh[20] = hh[20].rotateLeft(by: 18)
+            hh[21] = hh[21].rotateLeft(by: 2)
+            hh[22] = hh[22].rotateLeft(by: 61)
+            hh[23] = hh[23].rotateLeft(by: 56)
+            hh[24] = hh[24].rotateLeft(by: 14)
+
+            π(&hh)
+            χ(&hh)
+            ι(&hh, round: round)
+        }
     }
 
     ///  1. For all pairs (x,z) such that 0≤x<5 and 0≤z<w, let
@@ -209,90 +290,22 @@ public enum Sha3 {
     private static func ι(_ a: inout [UInt64], round: Int) {
         a[0] ^= round_constants[round]
     }
-
-    fileprivate static func process(block chunk: ArraySlice<UInt64>, currentHash hh: inout [UInt64]) {
-        // expand
-        hh[0] ^= chunk[0].littleEndian
-        hh[1] ^= chunk[1].littleEndian
-        hh[2] ^= chunk[2].littleEndian
-        hh[3] ^= chunk[3].littleEndian
-        hh[4] ^= chunk[4].littleEndian
-        hh[5] ^= chunk[5].littleEndian
-        hh[6] ^= chunk[6].littleEndian
-        hh[7] ^= chunk[7].littleEndian
-        hh[8] ^= chunk[8].littleEndian
-        if blockSize > 72 { // 72 / 8, sha-512
-            hh[9] ^= chunk[9].littleEndian
-            hh[10] ^= chunk[10].littleEndian
-            hh[11] ^= chunk[11].littleEndian
-            hh[12] ^= chunk[12].littleEndian
-            if blockSize > 104 { // 104 / 8, sha-384
-                hh[13] ^= chunk[13].littleEndian
-                hh[14] ^= chunk[14].littleEndian
-                hh[15] ^= chunk[15].littleEndian
-                hh[16] ^= chunk[16].littleEndian
-                if blockSize > 136 { // 136 / 8, sha-256
-                    hh[17] ^= chunk[17].littleEndian
-                    // FULL_SHA3_FAMILY_SUPPORT
-                    if blockSize > 144 { // 144 / 8, sha-224
-                        hh[18] ^= chunk[18].littleEndian
-                        hh[19] ^= chunk[19].littleEndian
-                        hh[20] ^= chunk[20].littleEndian
-                        hh[21] ^= chunk[21].littleEndian
-                        hh[22] ^= chunk[22].littleEndian
-                        hh[23] ^= chunk[23].littleEndian
-                        hh[24] ^= chunk[24].littleEndian
-                    }
-                }
-            }
-        }
-
-        // Keccak-f
-        for round in 0 ..< 24 {
-            θ(&hh)
-
-            hh[1] = hh[1].rotateLeft(by: 1)
-            hh[2] = hh[2].rotateLeft(by: 62)
-            hh[3] = hh[3].rotateLeft(by: 28)
-            hh[4] = hh[4].rotateLeft(by: 27)
-            hh[5] = hh[5].rotateLeft(by: 36)
-            hh[6] = hh[6].rotateLeft(by: 44)
-            hh[7] = hh[7].rotateLeft(by: 6)
-            hh[8] = hh[8].rotateLeft(by: 55)
-            hh[9] = hh[9].rotateLeft(by: 20)
-            hh[10] = hh[10].rotateLeft(by: 3)
-            hh[11] = hh[11].rotateLeft(by: 10)
-            hh[12] = hh[12].rotateLeft(by: 43)
-            hh[13] = hh[13].rotateLeft(by: 25)
-            hh[14] = hh[14].rotateLeft(by: 39)
-            hh[15] = hh[15].rotateLeft(by: 41)
-            hh[16] = hh[16].rotateLeft(by: 45)
-            hh[17] = hh[17].rotateLeft(by: 15)
-            hh[18] = hh[18].rotateLeft(by: 21)
-            hh[19] = hh[19].rotateLeft(by: 8)
-            hh[20] = hh[20].rotateLeft(by: 18)
-            hh[21] = hh[21].rotateLeft(by: 2)
-            hh[22] = hh[22].rotateLeft(by: 61)
-            hh[23] = hh[23].rotateLeft(by: 56)
-            hh[24] = hh[24].rotateLeft(by: 14)
-
-            π(&hh)
-            χ(&hh)
-            ι(&hh, round: round)
-        }
-    }
-
 }
 
 // MARK: - KeccakDigest
 
 public class KeccakDigest {
-    
+    // MARK: Properties
+
     private var lastBlock = Data()
     private var accumulatedHash = [UInt64](repeating: 0, count: Sha3.digestLength)
 
+    // MARK: Lifecycle
+
     public init() { }
-    
+
+    // MARK: Functions
+
     public func update(with data: Data) {
         var data = data
 
@@ -346,5 +359,4 @@ public class KeccakDigest {
         
         return Data(result[0 ..< Sha3.digestLength])
     }
-    
 }

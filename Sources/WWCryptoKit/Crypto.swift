@@ -1,8 +1,7 @@
 //
 //  Crypto.swift
-//  WWCryptoKit
 //
-//  Created by Sun on 2024/8/21.
+//  Created by Sun on 2022/9/30.
 //
 
 import Foundation
@@ -15,7 +14,6 @@ import WWExtensions
 // MARK: - Crypto
 
 public enum Crypto {
-    
     public static func hmacSha512(_ data: Data, key: Data) -> Data {
         let symmetricKey = SymmetricKey(data: key)
         return Data(HMAC<SHA512>.authenticationCode(for: data, using: symmetricKey))
@@ -32,9 +30,13 @@ public enum Crypto {
         if
             derivedKey.withUnsafeMutableBytes({ derivedKeyBytes -> Int32 in
                 salt.withUnsafeBytes { saltBytes -> Int32 in
-                    guard let saltPointer = saltBytes.bindMemory(to: UInt8.self).baseAddress else { return 1 }
+                    guard let saltPointer = saltBytes.bindMemory(to: UInt8.self).baseAddress else {
+                        return 1
+                    }
                     guard let derivedKeyPointer = derivedKeyBytes.baseAddress?.assumingMemoryBound(to: UInt8.self)
-                    else { return 1 }
+                    else {
+                        return 1
+                    }
 
                     return password.withUnsafeBytes { unsafeBytes in
                         let bytes = unsafeBytes.bindMemory(to: CChar.self).baseAddress!
@@ -49,8 +51,7 @@ public enum Crypto {
                         )
                     }
                 }
-            }) != 0
-        {
+            }) != 0 {
             print("=> Can't derive key!")
             return nil
         }
@@ -58,15 +59,25 @@ public enum Crypto {
         return derivedKey
     }
 
-    public static func deriveKeyNonStandard(password: String, salt: Data, iterations: Int = 2048, keyLength: Int = 64) -> Data? {
+    public static func deriveKeyNonStandard(
+        password: String,
+        salt: Data,
+        iterations: Int = 2048,
+        keyLength: Int = 64
+    )
+        -> Data? {
         var derivedKey = Data(repeating: 0, count: keyLength)
 
         if
             derivedKey.withUnsafeMutableBytes({ derivedKeyBytes -> Int32 in
                 salt.withUnsafeBytes { saltBytes -> Int32 in
-                    guard let saltPointer = saltBytes.bindMemory(to: UInt8.self).baseAddress else { return 1 }
+                    guard let saltPointer = saltBytes.bindMemory(to: UInt8.self).baseAddress else {
+                        return 1
+                    }
                     guard let derivedKeyPointer = derivedKeyBytes.baseAddress?.assumingMemoryBound(to: UInt8.self)
-                    else { return 1 }
+                    else {
+                        return 1
+                    }
 
                     return CCKeyDerivationPBKDF(
                         CCPBKDFAlgorithm(kCCPBKDF2),
@@ -77,8 +88,7 @@ public enum Crypto {
                         derivedKeyPointer, keyLength
                     )
                 }
-            }) != 0
-        {
+            }) != 0 {
             print("=> Can't derive key!")
             return nil
         }
@@ -119,7 +129,7 @@ public enum Crypto {
             let privKey = try? Curve25519.KeyAgreement.PrivateKey(rawRepresentation: privateKey)
             let pubKey = privKey?.publicKey
             return pubKey?.rawRepresentation ?? Data()
-            // Todo: not working
+            // TODO: not working
         }
     }
 
@@ -140,7 +150,9 @@ public enum Crypto {
                 nil
             ) }
         }
-        guard status == 1 else { throw SignError.signFailed }
+        guard status == 1 else {
+            throw SignError.signFailed
+        }
 
         let normalizedsig = UnsafeMutablePointer<secp256k1_ecdsa_signature>.allocate(capacity: 1)
         defer {
@@ -187,7 +199,9 @@ public enum Crypto {
 
     public static func ellipticIsValid(signature: Data, of hash: Data, publicKey: Data, compressed: Bool) -> Bool {
         guard let recoveredPublicKey = ellipticPublicKey(signature: signature, of: hash, compressed: compressed)
-        else { return false }
+        else {
+            return false
+        }
         return recoveredPublicKey == publicKey
     }
 
@@ -195,13 +209,15 @@ public enum Crypto {
         let encrypter = EllipticCurveEncrypterSecp256k1()
         var signatureInInternalFormat = encrypter.import(signature: signature)
         guard var publicKeyInInternalFormat = encrypter.publicKey(signature: &signatureInInternalFormat, hash: hash)
-        else { return nil }
+        else {
+            return nil
+        }
         return encrypter.export(publicKey: &publicKeyInInternalFormat, compressed: compressed)
     }
 
     public static func addEllipticCurvePoints(a: secp256k1_pubkey, b: secp256k1_pubkey) throws -> secp256k1_pubkey {
         var storage = ContiguousArray<secp256k1_pubkey>()
-        let pointers = UnsafeMutablePointer< UnsafePointer<secp256k1_pubkey>? >.allocate(capacity: 2)
+        let pointers = UnsafeMutablePointer<UnsafePointer<secp256k1_pubkey>?>.allocate(capacity: 2)
         defer {
             pointers.deinitialize(count: 2)
             pointers.deallocate()
@@ -219,20 +235,25 @@ public enum Crypto {
         // Combine to points to found new point (new public Key)
         var combinedKey = secp256k1_pubkey()
         if
-            withUnsafeMutablePointer(to: &combinedKey, { (combinedKeyPtr: UnsafeMutablePointer<secp256k1_pubkey>) -> Int32 in
-                secp256k1_ec_pubkey_combine(secp256k1.Context.rawRepresentation, combinedKeyPtr, immutablePointer, 2)
-            }) == 0
-        {
+            withUnsafeMutablePointer(
+                to: &combinedKey,
+                { (combinedKeyPtr: UnsafeMutablePointer<secp256k1_pubkey>) -> Int32 in
+                    secp256k1_ec_pubkey_combine(
+                        secp256k1.Context.rawRepresentation,
+                        combinedKeyPtr,
+                        immutablePointer,
+                        2
+                    )
+                }
+            ) == 0 {
             throw SignError.additionError
         }
 
         return combinedKey
     }
-
 }
 
 extension Crypto {
-    
     public static func sha256(_ data: Data) -> Data {
         Data(SHA256.hash(data: data))
     }
@@ -260,6 +281,8 @@ enum SecpResult {
     case success
     case failure
 
+    // MARK: Lifecycle
+
     init(_ result: Int32) {
         switch result {
         case 1:
@@ -284,6 +307,8 @@ public enum DerivationCurve {
     case secp256k1
     case ed25519
 
+    // MARK: Computed Properties
+
     public var bip32SeedSalt: Data {
         switch self {
         case .secp256k1: "Bitcoin seed".data(using: .ascii)!
@@ -297,6 +322,8 @@ public enum DerivationCurve {
         case .ed25519: false
         }
     }
+
+    // MARK: Functions
 
     public func publicKey(privateKey: Data, compressed: Bool) -> Data {
         Crypto.publicKey(privateKey: privateKey, curve: self, compressed: compressed)
@@ -314,15 +341,18 @@ public enum DerivationCurve {
             if
                 rawVariable.withUnsafeMutableBytes({ privateKeyBytes -> Int32 in
                     childKey.withUnsafeBytes { factorBytes -> Int32 in
-                        guard let factorPointer = factorBytes.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                        guard let factorPointer = factorBytes.bindMemory(to: UInt8.self).baseAddress else {
+                            return 0
+                        }
                         guard
                             let privateKeyPointer = privateKeyBytes.baseAddress?
                                 .assumingMemoryBound(to: UInt8.self)
-                        else { return 0 }
+                        else {
+                            return 0
+                        }
                         return secp256k1_ec_seckey_tweak_add(context, privateKeyPointer, factorPointer)
                     }
-                }) == 0
-            {
+                }) == 0 {
                 throw DerivationError.invalidCombineTweak
             }
             return Data(rawVariable)
@@ -336,7 +366,6 @@ public enum DerivationCurve {
 // MARK: DerivationCurve.DerivationError
 
 extension DerivationCurve {
-    
     public enum DerivationError: Error {
         case invalidCombineTweak
     }

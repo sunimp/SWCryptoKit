@@ -5,8 +5,8 @@ import PackageDescription
 let package = Package(
     name: "WWCryptoKit.Swift",
     platforms: [
-        .macOS(.v12),
         .iOS(.v14),
+        .macOS(.v12),
     ],
     products: [
         .library(
@@ -14,11 +14,11 @@ let package = Package(
             targets: ["WWCryptoKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/attaswift/BigInt.git", .upToNextMajor(from: "5.0.0")),
+        .package(url: "https://github.com/attaswift/BigInt.git", .upToNextMajor(from: "5.4.1")),
         .package(url: "https://github.com/sunimp/WWExtensions.Swift.git", .upToNextMajor(from: "1.1.1")),
-        .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "3.0.0"),
-        .package(url: "https://github.com/sunimp/secp256k1-swift.git", .upToNextMajor(from: "0.17.2")),
-        .package(url: "https://github.com/nicklockwood/SwiftFormat.git", from: "0.54.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", .upToNextMajor(from: "3.6.1")),
+        .package(url: "https://github.com/sunimp/secp256k1-swift.git", .upToNextMajor(from: "0.18.0")),
+        .package(url: "https://github.com/nicklockwood/SwiftFormat.git", from: "0.54.3"),
     ],
     targets: [
         .target(

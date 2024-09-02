@@ -3,7 +3,10 @@
 HsCryptoKit library include base cryptography. Hashing functions, secp256k1 curve.
 
 ## Requirements
-iOS (14.0, *)
+
+* Xcode 15.4+
+* Swift 5.10+
+* iOS 14.0+
 
 ## Installation
 
@@ -18,7 +21,7 @@ the `dependencies` value of your `Package.swift`.
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/sunimp/WWCryptoKit.Swift.git", .upToNextMajor(from: "1.3.6")),
+    .package(url: "https://github.com/sunimp/WWCryptoKit.Swift.git", .upToNextMajor(from: "1.4.0")),
 ]
 ```
 

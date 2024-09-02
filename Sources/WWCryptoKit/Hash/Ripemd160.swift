@@ -1,8 +1,7 @@
 //
-//  RIPEMD160.swift
-//  WWCryptoKit
+//  Ripemd160.swift
 //
-//  Created by Sun on 2024/8/21.
+//  Created by Sun on 2022/9/30.
 //
 
 import Foundation
@@ -10,16 +9,21 @@ import Foundation
 // MARK: - RIPEMD160
 
 struct RIPEMD160 {
+    // MARK: Properties
 
     private var MDbuf: (UInt32, UInt32, UInt32, UInt32, UInt32)
     private var buffer: Data
     private var count: Int64 // Total # of bytes processed.
 
+    // MARK: Lifecycle
+
     private init() {
-        MDbuf = (0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0)
+        MDbuf = (0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0)
         buffer = Data()
         count = 0
     }
+
+    // MARK: Functions
 
     private mutating func compress(_ X: UnsafePointer<UInt32>) {
         // *** Helper functions (originally macros in rmd160.h) ***
@@ -61,55 +65,95 @@ struct RIPEMD160 {
         }
 
         func GG(_ a: inout UInt32, _ b: UInt32, _ c: inout UInt32, _ d: UInt32, _ e: UInt32, _ x: UInt32, _ s: UInt32) {
-            a = a &+ G(b, c, d) &+ x &+ 0x5a827999
+            a = a &+ G(b, c, d) &+ x &+ 0x5A827999
             a = ROL(a, s) &+ e
             c = ROL(c, 10)
         }
 
         func HH(_ a: inout UInt32, _ b: UInt32, _ c: inout UInt32, _ d: UInt32, _ e: UInt32, _ x: UInt32, _ s: UInt32) {
-            a = a &+ H(b, c, d) &+ x &+ 0x6ed9eba1
+            a = a &+ H(b, c, d) &+ x &+ 0x6ED9EBA1
             a = ROL(a, s) &+ e
             c = ROL(c, 10)
         }
 
         func II(_ a: inout UInt32, _ b: UInt32, _ c: inout UInt32, _ d: UInt32, _ e: UInt32, _ x: UInt32, _ s: UInt32) {
-            a = a &+ I(b, c, d) &+ x &+ 0x8f1bbcdc
+            a = a &+ I(b, c, d) &+ x &+ 0x8F1BBCDC
             a = ROL(a, s) &+ e
             c = ROL(c, 10)
         }
 
         func JJ(_ a: inout UInt32, _ b: UInt32, _ c: inout UInt32, _ d: UInt32, _ e: UInt32, _ x: UInt32, _ s: UInt32) {
-            a = a &+ J(b, c, d) &+ x &+ 0xa953fd4e
+            a = a &+ J(b, c, d) &+ x &+ 0xA953FD4E
             a = ROL(a, s) &+ e
             c = ROL(c, 10)
         }
 
-        func FFF(_ a: inout UInt32, _ b: UInt32, _ c: inout UInt32, _ d: UInt32, _ e: UInt32, _ x: UInt32, _ s: UInt32) {
+        func FFF(
+            _ a: inout UInt32,
+            _ b: UInt32,
+            _ c: inout UInt32,
+            _ d: UInt32,
+            _ e: UInt32,
+            _ x: UInt32,
+            _ s: UInt32
+        ) {
             a = a &+ F(b, c, d) &+ x
             a = ROL(a, s) &+ e
             c = ROL(c, 10)
         }
 
-        func GGG(_ a: inout UInt32, _ b: UInt32, _ c: inout UInt32, _ d: UInt32, _ e: UInt32, _ x: UInt32, _ s: UInt32) {
-            a = a &+ G(b, c, d) &+ x &+ 0x7a6d76e9
+        func GGG(
+            _ a: inout UInt32,
+            _ b: UInt32,
+            _ c: inout UInt32,
+            _ d: UInt32,
+            _ e: UInt32,
+            _ x: UInt32,
+            _ s: UInt32
+        ) {
+            a = a &+ G(b, c, d) &+ x &+ 0x7A6D76E9
             a = ROL(a, s) &+ e
             c = ROL(c, 10)
         }
 
-        func HHH(_ a: inout UInt32, _ b: UInt32, _ c: inout UInt32, _ d: UInt32, _ e: UInt32, _ x: UInt32, _ s: UInt32) {
-            a = a &+ H(b, c, d) &+ x &+ 0x6d703ef3
+        func HHH(
+            _ a: inout UInt32,
+            _ b: UInt32,
+            _ c: inout UInt32,
+            _ d: UInt32,
+            _ e: UInt32,
+            _ x: UInt32,
+            _ s: UInt32
+        ) {
+            a = a &+ H(b, c, d) &+ x &+ 0x6D703EF3
             a = ROL(a, s) &+ e
             c = ROL(c, 10)
         }
 
-        func III(_ a: inout UInt32, _ b: UInt32, _ c: inout UInt32, _ d: UInt32, _ e: UInt32, _ x: UInt32, _ s: UInt32) {
-            a = a &+ I(b, c, d) &+ x &+ 0x5c4dd124
+        func III(
+            _ a: inout UInt32,
+            _ b: UInt32,
+            _ c: inout UInt32,
+            _ d: UInt32,
+            _ e: UInt32,
+            _ x: UInt32,
+            _ s: UInt32
+        ) {
+            a = a &+ I(b, c, d) &+ x &+ 0x5C4DD124
             a = ROL(a, s) &+ e
             c = ROL(c, 10)
         }
 
-        func JJJ(_ a: inout UInt32, _ b: UInt32, _ c: inout UInt32, _ d: UInt32, _ e: UInt32, _ x: UInt32, _ s: UInt32) {
-            a = a &+ J(b, c, d) &+ x &+ 0x50a28be6
+        func JJJ(
+            _ a: inout UInt32,
+            _ b: UInt32,
+            _ c: inout UInt32,
+            _ d: UInt32,
+            _ e: UInt32,
+            _ x: UInt32,
+            _ s: UInt32
+        ) {
+            a = a &+ J(b, c, d) &+ x &+ 0x50A28BE6
             a = ROL(a, s) &+ e
             c = ROL(c, 10)
         }
@@ -311,7 +355,9 @@ struct RIPEMD160 {
 
     private mutating func update(data: Data) {
         data.withUnsafeBytes { pointer in
-            guard var ptr = pointer.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return }
+            guard var ptr = pointer.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
+                return
+            }
             var length = data.count
             var X = [UInt32](repeating: 0, count: 16)
 

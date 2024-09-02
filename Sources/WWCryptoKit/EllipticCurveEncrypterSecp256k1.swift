@@ -1,8 +1,7 @@
 //
 //  EllipticCurveEncrypterSecp256k1.swift
-//  WWCryptoKit
 //
-//  Created by Sun on 2024/8/21.
+//  Created by Sun on 2022/10/1.
 //
 
 import Foundation
@@ -11,12 +10,18 @@ import secp256k1
 
 /// Convenience class over libsecp256k1 methods
 final class EllipticCurveEncrypterSecp256k1 {
+    // MARK: Properties
+
     /// holds internal state of the c library
     private let context: OpaquePointer
+
+    // MARK: Lifecycle
 
     init() {
         context = secp256k1.Context.rawRepresentation
     }
+
+    // MARK: Functions
 
     /// Signs the hash with the private key. Produces signature data structure that can be exported with
     /// export(signature:) method.
@@ -125,5 +130,4 @@ final class EllipticCurveEncrypterSecp256k1 {
         }
         return output
     }
-
 }

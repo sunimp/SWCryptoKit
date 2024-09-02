@@ -1,8 +1,7 @@
 //
 //  Base58.swift
-//  WWCryptoKit
 //
-//  Created by Sun on 2024/8/21.
+//  Created by Sun on 2022/9/30.
 //
 
 import Foundation
@@ -10,14 +9,12 @@ import Foundation
 import WWExtensions
 
 extension WWExtension where Base == String {
-    
     public var decodeBase58: Data {
         Base58.decode(base)
     }
 }
 
 extension WWExtension where Base == Data {
-    
     public var encodeBase58: String {
         Base58.encode(base)
     }
@@ -26,10 +23,88 @@ extension WWExtension where Base == Data {
 // MARK: - Base58
 
 public enum Base58 {
-    
+    // MARK: Static Properties
+
     static let baseAlphabets = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     static var zeroAlphabet: Character = "1"
     static var base = 58
+
+    // MARK: Static Functions
+
+    public static func encode(_ bytes: Data) -> String {
+        var bytes = bytes
+        var zerosCount = 0
+
+        for b in bytes {
+            if b != 0 {
+                break
+            }
+            zerosCount += 1
+        }
+
+        bytes.removeFirst(zerosCount)
+
+        let encodedBytes = convertBytesToBase(bytes)
+
+        var str = ""
+        while zerosCount > 0 {
+            str += String(zeroAlphabet)
+            zerosCount -= 1
+        }
+
+        for b in encodedBytes {
+            str += String(baseAlphabets[String.Index(utf16Offset: Int(b), in: baseAlphabets)])
+        }
+
+        return str
+    }
+
+    public static func decode(_ string: String) -> Data {
+        guard !string.isEmpty else {
+            return Data()
+        }
+
+        var zerosCount = 0
+        var length = 0
+        for c in string {
+            if c != zeroAlphabet {
+                break
+            }
+            zerosCount += 1
+        }
+        let size = sizeFromBase(size: string.lengthOfBytes(using: .utf8) - zerosCount)
+        var decodedBytes: [UInt8] = Array(repeating: 0, count: size)
+        for c in string {
+            guard let baseIndex = baseAlphabets.firstIndex(of: c) else {
+                return Data()
+            }
+
+            var carry = baseIndex.utf16Offset(in: baseAlphabets)
+            var i = 0
+            for j in (0 ... decodedBytes.count - 1).reversed() where carry != 0 || i < length {
+                carry += base * Int(decodedBytes[j])
+                decodedBytes[j] = UInt8(carry % 256)
+                carry /= 256
+                i += 1
+            }
+
+            assert(carry == 0)
+            length = i
+        }
+
+        // skip leading zeros
+        var zerosToRemove = 0
+
+        for b in decodedBytes {
+            if b != 0 {
+                break
+            }
+            zerosToRemove += 1
+        }
+        decodedBytes.removeFirst(zerosToRemove)
+
+        return Data(repeating: 0, count: zerosCount) + Data(decodedBytes)
+    }
 
     static func sizeFromByte(size: Int) -> Int {
         size * 138 / 100 + 1
@@ -61,76 +136,13 @@ public enum Base58 {
 
         var zerosToRemove = 0
         for b in encodedBytes {
-            if b != 0 { break }
+            if b != 0 {
+                break
+            }
             zerosToRemove += 1
         }
 
         encodedBytes.removeFirst(zerosToRemove)
         return encodedBytes
-    }
-
-    public static func encode(_ bytes: Data) -> String {
-        var bytes = bytes
-        var zerosCount = 0
-
-        for b in bytes {
-            if b != 0 { break }
-            zerosCount += 1
-        }
-
-        bytes.removeFirst(zerosCount)
-
-        let encodedBytes = convertBytesToBase(bytes)
-
-        var str = ""
-        while 0 < zerosCount {
-            str += String(zeroAlphabet)
-            zerosCount -= 1
-        }
-
-        for b in encodedBytes {
-            str += String(baseAlphabets[String.Index(utf16Offset: Int(b), in: baseAlphabets)])
-        }
-
-        return str
-    }
-
-    public static func decode(_ string: String) -> Data {
-        guard !string.isEmpty else { return Data() }
-
-        var zerosCount = 0
-        var length = 0
-        for c in string {
-            if c != zeroAlphabet { break }
-            zerosCount += 1
-        }
-        let size = sizeFromBase(size: string.lengthOfBytes(using: .utf8) - zerosCount)
-        var decodedBytes: [UInt8] = Array(repeating: 0, count: size)
-        for c in string {
-            guard let baseIndex = baseAlphabets.firstIndex(of: c) else { return Data() }
-
-            var carry = baseIndex.utf16Offset(in: baseAlphabets)
-            var i = 0
-            for j in (0 ... decodedBytes.count - 1).reversed() where carry != 0 || i < length {
-                carry += base * Int(decodedBytes[j])
-                decodedBytes[j] = UInt8(carry % 256)
-                carry /= 256
-                i += 1
-            }
-
-            assert(carry == 0)
-            length = i
-        }
-
-        // skip leading zeros
-        var zerosToRemove = 0
-
-        for b in decodedBytes {
-            if b != 0 { break }
-            zerosToRemove += 1
-        }
-        decodedBytes.removeFirst(zerosToRemove)
-
-        return Data(repeating: 0, count: zerosCount) + Data(decodedBytes)
     }
 }
