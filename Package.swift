@@ -3,42 +3,43 @@
 import PackageDescription
 
 let package = Package(
-    name: "WWCryptoKit.Swift",
+    name: "SWCryptoKit",
     platforms: [
         .iOS(.v14),
         .macOS(.v12),
     ],
     products: [
         .library(
-            name: "WWCryptoKit",
-            targets: ["WWCryptoKit"]),
+            name: "SWCryptoKit",
+            targets: ["SWCryptoKit"]),
     ],
     dependencies: [
         .package(url: "https://github.com/attaswift/BigInt.git", .upToNextMajor(from: "5.4.1")),
-        .package(url: "https://github.com/sunimp/WWExtensions.Swift.git", .upToNextMajor(from: "1.1.1")),
-        .package(url: "https://github.com/apple/swift-crypto.git", .upToNextMajor(from: "3.6.1")),
-        .package(url: "https://github.com/sunimp/secp256k1-swift.git", .upToNextMajor(from: "0.18.0")),
-        .package(url: "https://github.com/nicklockwood/SwiftFormat.git", from: "0.54.3"),
+        .package(url: "https://github.com/sunimp/SWExtensions.git", .upToNextMajor(from: "1.0.0")),
+        .package(url: "https://github.com/apple/swift-crypto.git", .upToNextMajor(from: "3.8.1")),
+        .package(url: "https://github.com/21-DOT-DEV/swift-secp256k1.git", .upToNextMajor(from: "0.17.0")),
+        .package(url: "https://github.com/nicklockwood/SwiftFormat.git", from: "0.54.6"),
     ],
     targets: [
         .target(
-            name: "WWCryptoKitC",
-            path: "Sources/WWCryptoKitC"
+            name: "SWCryptoKitC",
+            path: "Sources/SWCryptoKitC"
         ),
         .target(
-            name: "WWCryptoKit",
+            name: "SWCryptoKit",
             dependencies: [
-                .target(name: "WWCryptoKitC"),
+                .target(name: "SWCryptoKitC"),
+                "SWExtensions",
                 .product(name: "BigInt", package: "BigInt"),
-                .product(name: "WWExtensions", package: "WWExtensions.Swift"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
-                .product(name: "secp256k1", package: "secp256k1-swift"),
+                .product(name: "secp256k1", package: "swift-secp256k1"),
             ],
-            path: "Sources/WWCryptoKit"
+            path: "Sources/SWCryptoKit"
         ),
         .testTarget(
-            name: "WWCryptoKitTests",
-            dependencies: ["WWCryptoKit"]),
+            name: "SWCryptoKitTests",
+            dependencies: ["SWCryptoKit"]
+        ),
     ]
 )

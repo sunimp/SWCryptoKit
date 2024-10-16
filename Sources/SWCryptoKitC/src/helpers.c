@@ -1,8 +1,8 @@
 //
 //  helpers.c
-//  
+//  SWCryptoKitC
 //
-//  Created by Esenbek Kydyr uulu on 20/3/23.
+//  Created by Sun on 2020/3/23.
 //
 
 #include "helpers.h"

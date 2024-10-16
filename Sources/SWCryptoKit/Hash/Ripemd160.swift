@@ -1,7 +1,8 @@
 //
 //  Ripemd160.swift
+//  SWCryptoKit
 //
-//  Created by Sun on 2022/9/30.
+//  Created by Sun on 2024/8/14.
 //
 
 import Foundation

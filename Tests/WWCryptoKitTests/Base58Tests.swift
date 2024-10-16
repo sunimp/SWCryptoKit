@@ -1,11 +1,12 @@
 //
 //  Base58Tests.swift
+//  SWCryptoKitTest
 //
 //  Created by Sun on 2022/9/30.
 //
 
-@testable import WWCryptoKit
-import WWExtensions
+@testable import SWCryptoKit
+import SWExtensions
 import XCTest
 
 final class Base58Tests: XCTestCase {
@@ -41,8 +42,8 @@ final class Base58Tests: XCTestCase {
             let hex = pair[0]
             let result = pair[1]
 
-            XCTAssertEqual(hex.ww.hexData!.ww.encodeBase58, result)
-            XCTAssertEqual(result.ww.decodeBase58.ww.hex, hex)
+            XCTAssertEqual(hex.sw.hexData!.sw.encodeBase58, result)
+            XCTAssertEqual(result.sw.decodeBase58.sw.hex, hex)
         }
     }
 }

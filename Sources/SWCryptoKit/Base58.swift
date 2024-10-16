@@ -1,20 +1,21 @@
 //
 //  Base58.swift
+//  SWCryptoKit
 //
-//  Created by Sun on 2022/9/30.
+//  Created by Sun on 2024/8/14.
 //
 
 import Foundation
 
-import WWExtensions
+import SWExtensions
 
-extension WWExtension where Base == String {
+extension SWExtension where Base == String {
     public var decodeBase58: Data {
         Base58.decode(base)
     }
 }
 
-extension WWExtension where Base == Data {
+extension SWExtension where Base == Data {
     public var encodeBase58: String {
         Base58.encode(base)
     }

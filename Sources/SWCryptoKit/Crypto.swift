@@ -1,7 +1,8 @@
 //
 //  Crypto.swift
+//  SWCryptoKit
 //
-//  Created by Sun on 2022/9/30.
+//  Created by Sun on 2024/8/14.
 //
 
 import Foundation
@@ -9,7 +10,7 @@ import Foundation
 import CommonCrypto
 import Crypto
 import secp256k1
-import WWExtensions
+import SWExtensions
 
 // MARK: - Crypto
 
@@ -115,7 +116,7 @@ public enum Crypto {
     }
 
     public static func publicKey(privateKey: Data, curve: DerivationCurve = .secp256k1, compressed: Bool) -> Data {
-        let privateKey = privateKey.ww.bytes
+        let privateKey = privateKey.sw.bytes
         switch curve {
         case .secp256k1:
             var pubKeyPoint = secp256k1_pubkey()

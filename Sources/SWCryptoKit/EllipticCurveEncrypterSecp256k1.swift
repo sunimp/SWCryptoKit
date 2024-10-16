@@ -1,7 +1,8 @@
 //
 //  EllipticCurveEncrypterSecp256k1.swift
+//  SWCryptoKit
 //
-//  Created by Sun on 2022/10/1.
+//  Created by Sun on 2024/8/14.
 //
 
 import Foundation

@@ -1,8 +1,8 @@
 //
 //  Header.h
+//  SWCryptoKitC
 //
-//
-//  Created by Esenbek Kydyr uulu on 18/3/23.
+//  Created by Sun on 2020/3/23.
 //
 
 #ifndef HELPERS_H

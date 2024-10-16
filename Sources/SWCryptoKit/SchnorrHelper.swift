@@ -1,7 +1,8 @@
 //
 //  SchnorrHelper.swift
+//  SWCryptoKit
 //
-//  Created by Sun on 2023/3/14.
+//  Created by Sun on 2024/8/14.
 //
 
 import Foundation
@@ -9,7 +10,7 @@ import Foundation
 import BigInt
 import Crypto
 import secp256k1
-import WWCryptoKitC
+import SWCryptoKitC
 
 public enum SchnorrHelper {
     // MARK: Nested Types
@@ -22,7 +23,7 @@ public enum SchnorrHelper {
         case hashTweakError
     }
 
-    // MARK: Static Properties
+    // MARK: Static Computed Properties
 
     static var magic: (UInt8, UInt8, UInt8, UInt8) { (218, 111, 179, 140) }
 

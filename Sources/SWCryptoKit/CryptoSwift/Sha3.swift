@@ -1,7 +1,8 @@
 //
 //  Sha3.swift
+//  SWCryptoKit
 //
-//  Created by Sun on 2022/10/3.
+//  Created by Sun on 2024/8/14.
 //
 
 import Foundation
